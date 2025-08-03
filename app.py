@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 from supabase import create_client, Client
 from pycoingecko import CoinGeckoAPI
@@ -22,16 +23,15 @@ cg = CoinGeckoAPI()
 # Token ID mapping for CoinGecko
 TOKEN_MAPPING = {
     'eth': 'ethereum',
-    'ethereum': 'ethereum',  # Match token_id in the table
-    # Add more mappings if needed, e.g., 'btc': 'bitcoin'
+    'ethereum': 'ethereum',
 }
 
 # Google Sheets setup
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")
-GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")
+GOOGLE_CREDENTIALS_JSON = os.getenv("GOOGLE_CREDENTIALS_JSON")
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS, scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(GOOGLE_CREDENTIALS_JSON), scope)
 client = gspread.authorize(creds)
 sheet = client.open_by_key(GOOGLE_SHEET_ID).worksheet(GOOGLE_SHEET_NAME)
 
@@ -145,12 +145,13 @@ def calculate_pnl():
 def push_to_google_sheets(data):
     try:
         headers = ["date", "token_name", "avg_buy_price", "amount", "unrealized_pnl", "realized_pnl", "last_update"]
+        print("pnl_data before DataFrame:", data)
         if not data:
             print("No data to push to Google Sheets")
             df = pd.DataFrame(columns=headers)
         else:
             df = pd.DataFrame(data, columns=headers)
-            df = df.fillna(0)  # Replace NaN with 0
+            df = df.fillna(0)
             print("Data to be pushed to Google Sheets:", df.to_dict(orient='records'))
         
         sheet.clear()
