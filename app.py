@@ -47,12 +47,12 @@ def get_current_price(token_id):
         print(f"Error fetching price for {token_id} (mapped to {coingecko_id}): {e}")
         return None
 
-# Function to update present_price in Supabase
+# Function to update present_price in Supabase for 'process' status only
 def update_present_price():
     try:
-        response = supabase.table("trading_table").select("*").execute()
+        response = supabase.table("trading_table").select("*").eq("trading_status", "process").execute()
         data = response.data
-        print(f"Fetched {len(data)} rows from trading_table")
+        print(f"Fetched {len(data)} rows from trading_table with trading_status='process'")
         
         for row in data:
             token_id = row['token_id']
